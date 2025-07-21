@@ -51,7 +51,11 @@ const Signup = () => {
           className="bg-orange-600 text-white py-3 rounded-full text-lg hover:bg-orange-700 transition"
         >{isLoading ? "Signing up..." : "Sign-Up"}</button>
 
-        {error && <div className='error'>{error}</div>}
+        {error && (
+        <div className="bg-red-100 text-red-700 border border-red-400 px-4 py-3 rounded-md text-sm">
+          {error}
+        </div>
+      )}
       </form>
     </div>
   );

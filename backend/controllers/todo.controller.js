@@ -48,7 +48,7 @@ export const updateTodo = async (req, res) => {
 
   try {
     const updatedTodo = await Todo.findByIdAndUpdate(id, todoData, {new: true});
-    res.status(200).json({success: true, data: updatedTodo });
+    res.status(200).json({success: true,  message:"Todo updated", data: updatedTodo});
   } catch (error) {
     res.status(500).json({success: false, message: "Server Error"});
   }

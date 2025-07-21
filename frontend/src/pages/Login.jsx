@@ -9,7 +9,7 @@ const Login = () => {
   const login = useUserStore((state) => state.login);
   const isLoading = useUserStore((state) => state.isLoading);
   const error = useUserStore((state) => state.error);
-  
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     await login(email, password);

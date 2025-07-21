@@ -1,6 +1,6 @@
 # MERN Crash Course ToDo List
 
-A simple full-stack CRUD (Create, Read, Update, Delete) To-Do application built with the MERN stack: **MongoDB, Express, React, and Node.js**.
+This project is a full-stack To-Do List application built with the MERN stack: **MongoDB**, **Express.js**, **React**, and **Node.js**. It allows users to register, log in, and securely manage their personal tasks. Each user can create, view, update, and delete their own to-do items, with all data securely stored in a MongoDB database.
 
 ---
 ## Table of Contents
@@ -8,6 +8,7 @@ A simple full-stack CRUD (Create, Read, Update, Delete) To-Do application built 
 - [MERN Crash Course ToDo List](#mern-crash-course-todo-list)
   - [Table of Contents](#table-of-contents)
   - [Project Description](#project-description)
+  - [Project Description](#project-description-1)
   - [Project Structure](#project-structure)
   - [Backend Structure](#backend-structure)
     - [How the components connect with each other](#how-the-components-connect-with-each-other)
@@ -20,17 +21,23 @@ A simple full-stack CRUD (Create, Read, Update, Delete) To-Do application built 
     - [API Endpoints](#api-endpoints)
       - [To-Do Routes (`backend/routes/todo.route.js`)](#to-do-routes-backendroutestodoroutejs)
       - [User Routes (`backend/routes/user.route.js`)](#user-routes-backendroutesuserroutejs)
+    - [Controllers](#controllers)
+    - [Middleware](#middleware)
   - [Frontend](#frontend)
     - [Features](#features)
     - [Frontend Installation \& Setup](#frontend-installation--setup)
     - [Frontend Structure](#frontend-structure)
-    - [⚙️ Core Functionality](#️-core-functionality)
-      - [✅ Task Creation](#-task-creation)
-      - [🔄 Completion Toggle](#-completion-toggle)
-      - [🗑️ Deletion](#️-deletion)
-      - [🔍 Live Search](#-live-search)
-      - [📋 Filter by Incomplete](#-filter-by-incomplete)
-      - [🔢 Sorting](#-sorting)
+      - [Entry Points](#entry-points)
+      - [Components (`src/components/`)](#components-srccomponents)
+      - [Pages (`src/pages/`)](#pages-srcpages)
+      - [Store (`src/store/`)](#store-srcstore)
+    - [Core Functionality](#core-functionality)
+      - [Task Creation](#task-creation)
+      - [Completion Toggle](#completion-toggle)
+      - [Deletion](#deletion)
+      - [Live Search](#live-search)
+      - [Filter by Incomplete](#filter-by-incomplete)
+      - [Sorting](#sorting)
 
 ---
 
@@ -39,6 +46,10 @@ A simple full-stack CRUD (Create, Read, Update, Delete) To-Do application built 
 This project demonstrates a basic To-Do app where users can create, read, update, and delete tasks.  
 The backend is powered by Node.js and Express, with data stored in MongoDB using Mongoose ODM.  
 The frontend is planned to be developed with React (located in the `frontend/` folder).
+
+## Project Description
+
+The backend provides a RESTful API with robust authentication and authorization, ensuring that each user's data remains private. The frontend, built with React and styled using Tailwind CSS, offers a responsive and intuitive interface. Features include live search, filtering by completion status, and sorting tasks alphabetically or by creation date. State management is handled globally with Zustand, enabling instant UI updates and a smooth user experience.
 
 ---
 
@@ -111,11 +122,10 @@ full-stack-todo/
 This application uses **MongoDB** for data storage and **Mongoose** as the ODM (Object Data Modeling) library to define schemas and interact with the database.
 
 There are two main collections:
-    * `todos` – Stores user to-do items
-    * `users` – Stores registered user accounts
+ * `todos` – Stores user to-do items
+ * `users` – Stores registered user accounts
 
 #### To-Do Schema (`backend/models/todo.model.js`):
-
 ```js
 // Define the schema for a To-Do item
 const todoSchema = new mongoose.Schema({
@@ -152,7 +162,6 @@ export default Todo;
 ---
 
 #### User Schema (`backend/models/.model.js`)
-
 ```js
 import mongoose from "mongoose";
 
@@ -174,7 +183,6 @@ const User = mongoose.model("User", userSchema);
 
 export default User;
 ```
-
 ##### Schema Fields
 
 | Field | Type | Description |
@@ -193,30 +201,59 @@ The application's backend exposes RESTful API routes using Express. These are or
 * `todo.route.js` – Handles CRUD operations for to-do items
 * `user.route.js` – Handles user authentication (login and signup)
 
+---
+
 #### To-Do Routes (`backend/routes/todo.route.js`)
 
-This route file manages all operations related to To-Do items and is protected by authentication middleware. Only authenticated users can access these endpoints.
+This route file manages all operations related to To-Do items and is protected by **authentication middleware**. 
 
-**Middleware**
+<span style="color:red">Only authenticated users can access these endpoints.</span>
 
-  * `requireAuth`: Ensures the user is logged in before accessing any to-do route.
+| Method   | Endpoint         | Description                  |
+| -------- | ---------------- | ---------------------------- |
+| `GET`    | `/api/todos`     | Retrieve all todo items      |
+| `POST`   | `/api/todos`     | Create a new todo item       |
+| `PUT`    | `/api/todos/:id` | Update an existing todo item |
+| `DELETE` | `/api/todos/:id` | Delete a todo item           |
 
-| Method | Endpoint         | Description                  |
-| ------ | ---------------- | ---------------------------- |
-| GET    | `/api/todos`     | Retrieve all todo items      |
-| POST   | `/api/todos`     | Create a new todo item       |
-| PUT    | `/api/todos/:id` | Update an existing todo item |
-| DELETE | `/api/todos/:id` | Delete a todo item           |
+> Middleware:
+> 
+>    `requireAuth`: Ensures the user is logged in before accessing any to-do route.
+
+---
 
 #### User Routes (`backend/routes/user.route.js`)
 
-This route file manages user login and registration. These routes are public and do not require authentication.
+This route file manages user login and registration. 
 
 | Method | Path | Controller | Description |
 | ------ | --------- | ------------ | ----------------------- |
 | `POST` | `/login`  | `loginUser`  | Log in an existing user |
 | `POST` | `/signup` | `signupUser` | Register a new user     |
 
+> *These routes are public and do not require authentication.*
+
+---
+
+### Controllers
+
+<span style="color:#2ABB7F">Controllers are responsible for handling the main business logic of the application. They serve as the bridge between incoming HTTP requests and the database models.</span> Each controller function is mapped to a specific API endpoint and is called by the corresponding route.
+
+- Controllers **receive** and **process** *HTTP requests*, extract any necessary parameters or data, and **interact** with the **database models** to **perform CRUD (Create, Read, Update, Delete) operations**.
+- They handle validation, error checking, and formatting of responses, ensuring that the API returns consistent and meaningful data to the client.
+- By keeping the core logic in controllers, the codebase remains organized, modular, and easy to maintain, allowing routes to remain clean and focused
+
+---
+
+### Middleware
+
+Middleware functions are executed <span style="color:red">**before controllers**</span> *during the request-response cycle*. 
+
+<span style="color:#2ABB7F">They are used for tasks such as authentication, authorization, input validation, logging, and error handling.</span>
+
+- Middleware can **protect routes** by verifying user credentials, modify requests or responses, and ensure that only authorized users can access certain endpoints.
+
+---
 
 ## Frontend
 
@@ -282,42 +319,90 @@ frontend/
 │   ├── assets/              # Icons used in the UI
 │   ├── components/          # Reusable React components (e.g. TodoItem, DeleteButton)
 |   │   ├── DeleteButton.jsx
+|   │   ├── Navbar.jsx
 |   │   ├── ShowNotCompletedCheckbox.jsx
 |   │   ├── SortByAlphabetButton.jsx
 |   │   ├── SortByDateButton.jsx
 |   │   ├── Todo.jsx        # Main Todo app component
 │   │   ├── TodoItem.jsx    # Individual todo item with toggle/delete logic
 |   │   ├── ToggleButton.jsx
+│   ├── pages/   
+|   │   ├── Login.jsx
+|   │   ├── Signup.jsx
 │   ├── store/               # Global state management (e.g. Zustand store)
 │   │   ├── todo.jsx         # Central store for todo CRUD operations
+│   │   ├── user.jsx   
 │   ├── App.jsx              # Main application wrapper
 │   └── main.jsx             # Entry point for the React app
 ├── package.json             # Project metadata and dependencies
 ```
 ---
 
+#### Entry Points
 
-### ⚙️ Core Functionality
+* `App.jsx` – **Wraps the main UI**, **defines application routes**, and manages the overall layout.
+* `main.jsx` – **Initializes the React app** and **renders** it to the **DOM**.
 
-This frontend is built with **React** and uses **Zustand** for global state management. It communicates with a backend API (via RESTful endpoints) to handle todos efficiently, with **optimistic UI updates** and minimal re-rendering.
+---
 
-#### ✅ Task Creation
+#### Components (`src/components/`)
+
+This folder contains modular, reusable UI components that make up the building blocks of the application.
+
+* `Todo.jsx` – Main To-Do list container, manages the list and user interactions.
+* `TodoItem.jsx` – Individual task with toggle & delete logic
+* `DeleteButton.jsx`, `ToggleButton.jsx` – Task controls
+* `SortByDateButton.jsx`, `SortByAlphabetButton.jsx` – Sorting logic
+* `ShowNotCompletedCheckbox.jsx` – Filter toggle
+* `Navbar.jsx` – Navigation header
+
+---
+
+#### Pages (`src/pages/`)
+
+Contains full-page React components that represent distinct views or screens.
+
+* `Login.jsx` – User login form and logic
+* `Signup.jsx` – User registration form
+
+---
+
+#### Store (`src/store/`)
+
+Handles global state management using Zustand, keeping the UI in sync with backend data and authentication status.
+
+* `todo.jsx` – Manages the to-do list state and all CRUD API calls for tasks.
+* `user.jsx` – Manages user authentication state, login, sign-up, and token persistence.
+
+---
+
+### Core Functionality
+
+This frontend is built with **React** and uses **Zustand** for global state management. It communicates with a backend API (via RESTful endpoints) to handle todos efficiently.
+
+#### Task Creation
 - Users can create a new task via a controlled text input.
 - On submission, `createTodo` sends a `POST` request to `/api/todos`.
 - The newly created todo is immediately reflected in the UI by updating the Zustand store (`todos` array).
 - Local state is cleared after successful creation.
 
-#### 🔄 Completion Toggle
+---
+
+#### Completion Toggle
 - Each task includes a toggle switch that controls the `isComplete` status.
 - `toggleTodo(pid)` performs a `PATCH` (or `POST`, depending on backend) to toggle the flag.
 - Upon a successful response, Zustand updates only the modified task to avoid full list refresh.
 
-#### 🗑️ Deletion
+---
+
+#### Deletion
 - A delete icon (wrapped in `DeleteButton`) triggers `deleteTodo(pid)`, sending a `DELETE` request to `/api/todos/:id`.
 - The task is removed from the store (and UI) immediately after confirmation from the backend.
 - Uses `Array.prototype.filter` in state update to exclude the deleted task.
 
-#### 🔍 Live Search
+---
+
+#### Live Search
 - A dedicated `<input>` captures `searchText` using `useState`.
 - `filteredTodos` is derived via:
 
@@ -327,7 +412,9 @@ This frontend is built with **React** and uses **Zustand** for global state mana
   )
 - Real-time responsiveness ensures efficient user experience without extra network requests.
 
-#### 📋 Filter by Incomplete
+---
+
+#### Filter by Incomplete
 
   - A checkbox component (ShowNotCompletedCheckbox) allows users to filter only not completed todos.
   - When checked, the visible list is derived from:
@@ -338,7 +425,9 @@ This frontend is built with **React** and uses **Zustand** for global state mana
 
   - It works in combination with the search filter for compound queries.
 
-#### 🔢 Sorting
+---
+
+#### Sorting
 
 Two buttons allow dynamic client-side sorting:
 
@@ -355,3 +444,5 @@ Two buttons allow dynamic client-side sorting:
     todos.sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
     ```
     - Useful for chronological task organization (e.g., most recent at bottom).
+
+---
