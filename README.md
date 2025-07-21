@@ -9,15 +9,21 @@ A simple full-stack CRUD (Create, Read, Update, Delete) To-Do application built 
   - [Table of Contents](#table-of-contents)
   - [Project Description](#project-description)
   - [Project Structure](#project-structure)
+  - [Backend Structure](#backend-structure)
     - [How the components connect with each other](#how-the-components-connect-with-each-other)
-  - [Installation \& Setup](#installation--setup)
     - [Backend Setup](#backend-setup)
-  - [Database Structure](#database-structure)
-    - [Mongoose Schema (`backend/models/Todo.js`):](#mongoose-schema-backendmodelstodojs)
-  - [API Endpoints](#api-endpoints)
+    - [Database Structure](#database-structure)
+      - [To-Do Schema (`backend/models/todo.model.js`):](#to-do-schema-backendmodelstodomodeljs)
+        - [Schema Fields](#schema-fields)
+      - [User Schema (`backend/models/.model.js`)](#user-schema-backendmodelsmodeljs)
+        - [Schema Fields](#schema-fields-1)
+    - [API Endpoints](#api-endpoints)
+      - [To-Do Routes (`backend/routes/todo.route.js`)](#to-do-routes-backendroutestodoroutejs)
+      - [User Routes (`backend/routes/user.route.js`)](#user-routes-backendroutesuserroutejs)
   - [Frontend](#frontend)
-    - [Frontend Structure](#frontend-structure)
     - [Features](#features)
+    - [Frontend Installation \& Setup](#frontend-installation--setup)
+    - [Frontend Structure](#frontend-structure)
     - [⚙️ Core Functionality](#️-core-functionality)
       - [✅ Task Creation](#-task-creation)
       - [🔄 Completion Toggle](#-completion-toggle)
@@ -39,20 +45,25 @@ The frontend is planned to be developed with React (located in the `frontend/` f
 ## Project Structure
 
 ```
-mern-crash-course/
+full-stack-todo/
 │
-├── backend/
-│ ├── config/       # Contains files for MongoDB connection and configuration (e.g. db.js)
-│ ├── controllers/  # Contains request handling logic (CRUD) for routes, e.g. create, read, update, delete tasks
-│ ├── models/       # ontains Mongoose schemas/models defining the data structure in the database (e.g. Todo.js)
-│ ├── routes/       # Contains files that define API endpoints and link requests to controllers
-│ └── server.js     # Main backend entry file initializing Express app, connecting to DB, and loading routes
-│
-├── frontend/       # React frontend application (to be implemented)
+├── backend/        # Backend (Node.js/Express/MongoDB) source code
+├── frontend/       # React frontend application
 │
 ├── .env            # Environment variables file
 ├── package.json    # Backend dependencies and scripts
 └── README.md       # Project documentation
+```
+
+## Backend Structure
+
+```
+├── backend/
+│ ├── config/       # Contains files for MongoDB connection and configuration (e.g. db.js)
+│ ├── controllers/  # Contains request handling logic (CRUD) for routes, e.g. create, read, update, delete tasks
+│ ├── models/       # Contains Mongoose schemas/models defining the data structure in the database (e.g. Todo.js)
+│ ├── routes/       # Contains files that define API endpoints and link requests to controllers
+│ └── server.js     # Main backend entry file initializing Express app, connecting to DB, and loading routes
 ```
 
 ### How the components connect with each other
@@ -64,46 +75,46 @@ mern-crash-course/
 - The **frontend** (React app) will send HTTP requests to the backend API endpoints to display and manage tasks.
 ---
 
-## Installation & Setup
-
 ### Backend Setup
 
 1. Navigate to the backend folder and install dependencies:
 
-```bash
-cd mern-crash-course/backend
-cls
-npm init -y
-cls
-npm install express mongoose dotenv
-cls
-npm i nodemon -D
-cls
-npm run dev
-```
+    ```bash
+    cd mern-crash-course/backend
+    cls
+    npm init -y
+    cls
+    npm install express mongoose dotenv
+    cls
+    npm i nodemon -D
+    cls
+    npm run dev
+    ```
 
 2. Create a .env file in the backend/ directory with the following content:
 
-```
-MONGO_URI=your_mongodb_uri
-```
+    ```
+    MONGO_URI=your_mongodb_uri
+    ```
 
 3. Running the Project
 
-Start the backend server in development mode (with nodemon):
+    Start the backend server in development mode (with nodemon):
 
-```bash
-npm run dev
-```
+    ```bash
+    npm run dev
+    ```
 ---
 
-## Database Structure
+### Database Structure
 
-The application uses **MongoDB** as the database.  
-Each To-Do item is stored as a document in a collection (e.g., `todos`).  
-The schema is defined using **Mongoose** in the backend.
+This application uses **MongoDB** for data storage and **Mongoose** as the ODM (Object Data Modeling) library to define schemas and interact with the database.
 
-### Mongoose Schema (`backend/models/Todo.js`):
+There are two main collections:
+    * `todos` – Stores user to-do items
+    * `users` – Stores registered user accounts
+
+#### To-Do Schema (`backend/models/todo.model.js`):
 
 ```js
 // Define the schema for a To-Do item
@@ -116,6 +127,10 @@ const todoSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  user_id: {
+    type: String,
+    required: true
+  }
 }, {timestamps: true}); // Automatically add 'createdAt' and 'updatedAt' fields
 
 // Create the model for the 'todos' collection
@@ -123,20 +138,68 @@ const Todo = mongoose.model("Todo", todoSchema);
 
 export default Todo;
 ```
-**Schema Fields**
+##### Schema Fields
 
-  * _id (`ObjectId`): Automatically generated unique identifier for each document by MongoDB.
+| Field | Type | Description                                        |
+| ------------ | ---------- | ---------------------------------------- |
+| `_id`        | `ObjectId` | Auto-generated unique identifier by MongoDB        |
+| `name`       | `String`   | Task title/description (**required**)              |
+| `isComplete` | `Boolean`  | Task status (defaults to `false`)                  |
+| `user_id`    | `String`   | ID of the user who created the task (**required**) |
+| `createdAt`  | `Date`     | Auto-generated timestamp on creation               |
+| `updatedAt`  | `Date`     | Auto-updated timestamp on modification             |
 
-  * name (`String`): The task description/title. This field is required.
-
-  * isComplete (`Boolean`): Indicates if the task is completed. Defaults to false.
-
-  * createdAt (`Date`): Timestamp automatically set when a document is created.
-
-  * updatedAt (`Date`): Timestamp automatically updated when a document is modified.
 ---
 
-## API Endpoints
+#### User Schema (`backend/models/.model.js`)
+
+```js
+import mongoose from "mongoose";
+
+// Define the schema for a user item
+const userSchema = new mongoose.Schema({
+  email:{
+    type: String,
+    required: true,
+    unique: true
+  },
+  password: {
+    type: String,
+    required: true
+  },
+}, {timestamps: true}); // Automatically add 'createdAt' and 'updatedAt' fields
+
+// Create the model for the 'users' collection
+const User = mongoose.model("User", userSchema);
+
+export default User;
+```
+
+##### Schema Fields
+
+| Field | Type | Description |
+| ----------- | ---------- | ----------------------------------------- |
+| `_id`       | `ObjectId` | Auto-generated unique identifier by MongoDB      |
+| `email`     | `String`   | User email address (must be unique and required) |
+| `password`  | `String`   | Hashed password (required)                       |
+| `createdAt` | `Date`     | Timestamp when the user was created              |
+| `updatedAt` | `Date`     | Timestamp when the user data was last updated    |
+
+--- 
+
+### API Endpoints
+
+The application's backend exposes RESTful API routes using Express. These are organized in two main route files:
+* `todo.route.js` – Handles CRUD operations for to-do items
+* `user.route.js` – Handles user authentication (login and signup)
+
+#### To-Do Routes (`backend/routes/todo.route.js`)
+
+This route file manages all operations related to To-Do items and is protected by authentication middleware. Only authenticated users can access these endpoints.
+
+**Middleware**
+
+  * `requireAuth`: Ensures the user is logged in before accessing any to-do route.
 
 | Method | Endpoint         | Description                  |
 | ------ | ---------------- | ---------------------------- |
@@ -145,9 +208,70 @@ export default Todo;
 | PUT    | `/api/todos/:id` | Update an existing todo item |
 | DELETE | `/api/todos/:id` | Delete a todo item           |
 
+#### User Routes (`backend/routes/user.route.js`)
+
+This route file manages user login and registration. These routes are public and do not require authentication.
+
+| Method | Path | Controller | Description |
+| ------ | --------- | ------------ | ----------------------- |
+| `POST` | `/login`  | `loginUser`  | Log in an existing user |
+| `POST` | `/signup` | `signupUser` | Register a new user     |
+
+
 ## Frontend
 
 The frontend is a React application located in the frontend/ directory. It provides an interactive user interface for managing todos and communicates with the backend API via HTTP requests.
+
+---
+
+### Features
+
+  * ✅ Add, delete, and toggle todos
+  * 🔍 Search todos by name
+  * 📥 Filter to show only incomplete todos
+  * 🔤 Sort todos alphabetically
+  * 📅 Sort todos by creation date
+  * ⛃ Global state management using Zustand
+  * 🎯 Instant UI updates without refresh after each action
+
+---
+
+
+### Frontend Installation & Setup
+
+To set up the frontend with React, Vite, and Tailwind CSS:
+
+```bash
+cd .\frontend\
+npm create vite@latest .      # Create a React project using Vite
+npm install
+npm run dev
+npm install -D tailwindcss@3 postcss autoprefixer
+npx tailwindcss init -p
+```
+
+* Configure `tailwind.config.js`:
+   ```js
+   /** @type {import('tailwindcss').Config} */
+   export default {
+     content: [
+       "./index.html",
+       "./src/**/*.{js,ts,jsx,tsx}",
+     ],
+     theme: {
+       extend: {},
+     },
+     plugins: [],
+   }
+   ```
+
+*  Add Tailwind directives to your main CSS file (e.g., `src/index.css`):
+   ```css
+   @tailwind base;
+   @tailwind components;
+   @tailwind utilities;
+   ```
+---
 
 ### Frontend Structure
 
@@ -170,15 +294,8 @@ frontend/
 │   └── main.jsx             # Entry point for the React app
 ├── package.json             # Project metadata and dependencies
 ```
-### Features
+---
 
-  * ✅ Add, delete, and toggle todos
-  * 🔍 Search todos by name
-  * 📥 Filter to show only incomplete todos
-  * 🔤 Sort todos alphabetically
-  * 📅 Sort todos by creation date
-  * ⛃ Global state management using Zustand
-  * 🎯 Instant UI updates without refresh after each action
 
 ### ⚙️ Core Functionality
 

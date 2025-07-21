@@ -1,10 +1,12 @@
 import {create} from "zustand";
+import { useUserStore } from "./user"; 
 
 export const useTodoStore = create((set) => ({
 	todos: [],
 	setTodos: (todos) => set({ todos }),
 
 	createTodo: async (newTodo) => {
+		const user = useUserStore.getState().user;
 		if (!newTodo.name) {
 			return { success: false, message: "Please fill in all fields." };
 		}
@@ -12,6 +14,7 @@ export const useTodoStore = create((set) => ({
 			method: "POST",
 			headers: {
 				"Content-Type": "application/json",
+				"Authorization": `Bearer ${user.token}`
 			},
 			body: JSON.stringify(newTodo),
 		});
@@ -19,16 +22,26 @@ export const useTodoStore = create((set) => ({
 		set((state) => ({ todos: [...state.todos, data.data] }));
 		return { success: true, message: "Product created successfully" };
 	},
-
-  fetchTodos: async () => {
-		const res = await fetch("/api/todos");
+	
+  	fetchTodos: async () => {
+		const user = useUserStore.getState().user;
+   		if (!user || !user.token) return;
+		const res = await fetch("/api/todos", {
+			headers: {
+				"Authorization": `Bearer ${user.token}`,
+			}
+		});
 		const data = await res.json();
 		set({ todos: data.data });
 	},
 
   deleteTodo: async (pid) => {
+		const user = useUserStore.getState().user;
 		const res = await fetch(`/api/todos/${pid}`, {
 			method: "DELETE",
+			headers: {
+				"Authorization": `Bearer ${user.token}`,
+			}
 		});
 		const data = await res.json();
 		if (!data.success) return { success: false, message: data.message };
@@ -39,8 +52,12 @@ export const useTodoStore = create((set) => ({
 	},
 
   toggleTodo: async (pid) => {
+	const user = useUserStore.getState().user;
     const res = await fetch(`/api/todos/${pid}`, {
       method: "PUT",
+	  headers: {
+		"Authorization": `Bearer ${user.token}`,
+	  }
     });
     const data = await res.json();
 

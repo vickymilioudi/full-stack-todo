@@ -10,6 +10,10 @@ const todoSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
+  user_id: {
+    type: String,
+    required: true
+  }
 }, {timestamps: true}); // Automatically add 'createdAt' and 'updatedAt' fields
 
 // Create the model for the 'todos' collection

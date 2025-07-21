@@ -4,41 +4,52 @@ import axios from "axios";
 import todo_icon from '../assets/todo_icon.png'
 
 import { useTodoStore } from "../store/todo";
+import { useUserStore } from "../store/user";
+
 import TodoItem from './TodoItem';
+
 import SortByAlphabetButton from './SortByAlphabetButton'
 import SortByDateButton from './SortByDateButton'
 import ShowNotCompletedCheckbox from './ShowNotCompletedCheckbox';
+
 
 const Todo = () => {
     const [newTodo, setNewTodo] = useState({
         name: "",
         isCompeted: false,
     });
+
+    const { user } = useUserStore();
     
     const {createTodo} = useTodoStore()
     const handleAddTodo = async () => {
-        const {success, message} = await createTodo(newTodo)
-        console.log("Success:", success)
-        console.log("Message:", message)
-        setNewTodo({name:""});
+        if (!user) return; // Prevent adding if not logged in
+        const { success, message } = await createTodo(newTodo, user?.token); // Pass token if needed
+        console.log("Success:", success);
+        console.log("Message:", message);
+        setNewTodo({ name: "" });
     };
 
     const {fetchTodos, todos} = useTodoStore();
     useEffect(() => {
-        fetchTodos();
-    }, [fetchTodos]);
-    console.log("todos:", todos);
+        if (user){
+            fetchTodos(user?.token);
+        }
+    }, [fetchTodos, user]);
 
     const {deleteTodo} = useTodoStore();
     const handleDeleteTodo = async (pid) => {
-        const { success, message } = await deleteTodo(pid);
-        console.log("Success:", success)
-        console.log("Message:", message)
+        if (!user) return;
+        const { success, message } = await deleteTodo(pid, user?.token);
+        console.log("Success:", success);
+        console.log("Message:", message);
     };
+
 
     const { toggleTodo } = useTodoStore();
     const handleToggleTodo = async (id) => {
-        const { success, message } = await toggleTodo(id);
+         if (!user) return;
+        const { success, message } = await toggleTodo(id, user?.token);
         console.log("Success:", success);
         console.log("Message:", message);
     };
@@ -60,8 +71,18 @@ const Todo = () => {
         sortTodosByDate();
     };
 
+    const isAuthChecked = useUserStore((state) => state.isAuthChecked);
+    const loadUserFromStorage = useUserStore((state) => state.loadUserFromStorage);
+    useEffect(() => {
+        loadUserFromStorage();
+    }, [loadUserFromStorage]);
+
+    if (!isAuthChecked) return <div>Loading...</div>;
+    if (!user) return <div className="text-center mt-10">Please log in to view your todos.</div>;
+
     return (
-        <div className='bg-white place-self-center w-11/12 max-w-md flex flex-col p-7 min-h-[550px] rounded-xl'>
+        <div className="min-h-screen flex items-center justify-center bg-gray-100">
+            <div className='bg-white w-11/12 max-w-md flex flex-col p-7 min-h-[600px] rounded-xl'>  
       
         {/* ------------ title ------------ */}
         <div className='flex items-center my-7 gap-2'>
@@ -112,6 +133,7 @@ const Todo = () => {
           return <TodoItem key={todo._id} todo={todo} deleteTodo={handleDeleteTodo} toggleTodo={handleToggleTodo} /> 
         })}
       </div>
+    </div>
     </div>
   )
 }
