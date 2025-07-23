@@ -10,8 +10,9 @@ const todoSchema = new mongoose.Schema({
     type: Boolean,
     default: false
   },
-  user_id: {
-    type: String,
+  userId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: "User",
     required: true
   }
 }, {timestamps: true}); // Automatically add 'createdAt' and 'updatedAt' fields

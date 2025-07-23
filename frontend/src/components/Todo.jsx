@@ -46,10 +46,10 @@ const Todo = () => {
     };
 
 
-    const { toggleTodo } = useTodoStore();
+    const toggleTodo = useTodoStore((state) => state.toggleTodo);
     const handleToggleTodo = async (id) => {
          if (!user) return;
-        const { success, message } = await toggleTodo(id, user?.token);
+        const { success, message } = await toggleTodo(id);
         console.log("Success:", success);
         console.log("Message:", message);
     };

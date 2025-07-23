@@ -4,8 +4,8 @@ import Todo from "../models/todo.model.js"
 // * Get all Todos
 export const getTodos = async (req, res) => {
     try {
-      const user_id = req.user._id; 
-      const todos = await Todo.find( { user_id } );
+      const userId = req.user._id; 
+      const todos = await Todo.find( { userId } );
       res.status(200).json({success:true, data:todos})
     } catch (error) {
       console.log("Error in fetching todos:", error.message);
@@ -15,7 +15,7 @@ export const getTodos = async (req, res) => {
 
 // * Create new Todo
 export const createTodo = async (req, res) => {
-  const user_id = req.user._id;
+  const userId = req.user._id;
   const todo = req.body;
 
   if (!todo.name) {
@@ -24,7 +24,7 @@ export const createTodo = async (req, res) => {
 
   const newTodo = new Todo({
     ...todo,
-    user_id: user_id,
+    userId: userId,
   });
 
   try {
@@ -40,16 +40,21 @@ export const createTodo = async (req, res) => {
 // * Update a Todo
 export const updateTodo = async (req, res) => {
   const { id } = req.params;
-  const todoData = req.body;
 
   if (!mongoose.Types.ObjectId.isValid(id)) {
     return res.status(404).json({success: false, message: "Invalid Todo Id"});
   }
 
   try {
-    const updatedTodo = await Todo.findByIdAndUpdate(id, todoData, {new: true});
+    const updatedTodo = await Todo.findById(id);
+    if (!updatedTodo) {
+      return res.status(404).json({ success: false, message: "Todo not found" });
+    }
+    updatedTodo.isComplete = !updatedTodo.isComplete;
+    await updatedTodo.save();
     res.status(200).json({success: true,  message:"Todo updated", data: updatedTodo});
   } catch (error) {
+    console.error("Update Error:", error);
     res.status(500).json({success: false, message: "Server Error"});
   }
 };
